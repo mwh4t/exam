@@ -1,0 +1,66 @@
+<Window x:Class="exam.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Список товаров" Height="620" Width="1000"
+        WindowStartupLocation="CenterScreen">
+
+    <DockPanel>
+
+        <!-- Верхняя панель: выход + ФИО -->
+        <DockPanel DockPanel.Dock="Top" Background="#EEEEEE" LastChildFill="False"
+                   Height="36">
+            <Button Content="← Выйти" Click="LogoutButton_Click"
+                    DockPanel.Dock="Left" Margin="8,4" Padding="10,2"/>
+            <TextBlock Name="UserLabel" DockPanel.Dock="Right"
+                       VerticalAlignment="Center" Margin="12,0"
+                       FontWeight="Bold"/>
+        </DockPanel>
+
+        <!-- Поиск/фильтр (скрыт для гостя/клиента) -->
+        <StackPanel Name="FilterPanel" DockPanel.Dock="Top"
+                    Orientation="Horizontal" Margin="8,6">
+            <TextBlock Text="Поиск:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBox Name="SearchBox" Width="200" Margin="0,0,14,0"
+                     TextChanged="SearchBox_TextChanged"/>
+
+            <TextBlock Text="Поставщик:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox Name="SupplierBox" Width="160" Margin="0,0,14,0"
+                      SelectionChanged="SupplierBox_SelectionChanged"/>
+
+            <TextBlock Text="Сортировка:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox Name="SortBox" Width="160"
+                      SelectionChanged="SortBox_SelectionChanged"/>
+        </StackPanel>
+
+        <!-- Кнопки администратора -->
+        <StackPanel Name="AdminPanel" DockPanel.Dock="Bottom"
+                    Orientation="Horizontal" Margin="8,6">
+            <Button Content="Добавить товар" Click="AddButton_Click"
+                    Margin="0,0,8,0" Padding="12,4"/>
+            <Button Content="Удалить товар"  Click="DeleteButton_Click"
+                    Padding="12,4"/>
+        </StackPanel>
+
+        <!-- Таблица товаров -->
+        <DataGrid Name="ProductsGrid"
+                  AutoGenerateColumns="False" IsReadOnly="True"
+                  GridLinesVisibility="All" Margin="8,0"
+                  LoadingRow="ProductsGrid_LoadingRow"
+                  MouseDoubleClick="ProductsGrid_DoubleClick">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Артикул"      Binding="{Binding Article}"          Width="80"/>
+                <DataGridTextColumn Header="Наименование" Binding="{Binding Name}"              Width="120"/>
+                <DataGridTextColumn Header="Категория"    Binding="{Binding CategoryName}"      Width="110"/>
+                <DataGridTextColumn Header="Производитель" Binding="{Binding ManufacturerName}"  Width="110"/>
+                <DataGridTextColumn Header="Поставщик"    Binding="{Binding SupplierName}"      Width="100"/>
+                <DataGridTextColumn Header="Цена"         Binding="{Binding Price}"             Width="70"/>
+                <DataGridTextColumn Header="Ед."          Binding="{Binding UnitName}"          Width="45"/>
+                <DataGridTextColumn Header="Кол-во"       Binding="{Binding Stock}"             Width="60"/>
+                <DataGridTextColumn Header="Скидка %"     Binding="{Binding Discount}"          Width="65"/>
+                <DataGridTextColumn Header="Описание"     Binding="{Binding Description}"       Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+    </DockPanel>
+</Window>
+    

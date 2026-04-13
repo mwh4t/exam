@@ -1,0 +1,25 @@
+<Window x:Class="exam.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Вход — ООО Обувь" Height="360" Width="340"
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+
+    <StackPanel Margin="30">
+        <TextBlock Text="ООО «Обувь»" FontSize="18" FontWeight="Bold"
+                   HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+        <TextBlock Text="Логин:" Margin="0,0,0,4"/>
+        <TextBox Name="LoginBox" Margin="0,0,0,10"/>
+
+        <TextBlock Text="Пароль:" Margin="0,0,0,4"/>
+        <PasswordBox Name="PasswordBox" Margin="0,0,0,14"/>
+
+        <TextBlock Name="ErrorText" Foreground="Red" Margin="0,0,0,8"/>
+
+        <Button Content="Войти" Click="LoginButton_Click"
+                Margin="0,0,0,8" Padding="0,6"/>
+        <Button Content="Войти как гость" Click="GuestButton_Click"
+                Padding="0,6"/>
+    </StackPanel>
+</Window>
+    
