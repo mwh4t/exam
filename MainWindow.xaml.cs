@@ -1,47 +1,39 @@
-using System;
+using korzunov.models;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
-namespace exam
+namespace korzunov
 {
     public partial class MainWindow : Window
     {
         private User _user;
-        private List<Product> _allProducts = new List<Product>();
+        private List<Product> _all = new List<Product>();
 
         public MainWindow(User user)
         {
             InitializeComponent();
             _user = user;
-
             UserLabel.Text = user.FullName + " (" + user.RoleName + ")";
 
-            // Скрываем поиск/фильтр для гостя и клиента
-            bool canFilter = user.RoleName == "Менеджер" ||
-                             user.RoleName == "Администратор";
+            bool canFilter = user.RoleName == "Менеджер" || user.RoleName == "Администратор";
             FilterPanel.Visibility = canFilter ? Visibility.Visible : Visibility.Collapsed;
-
-            // Скрываем кнопки администратора
-            AdminPanel.Visibility = user.RoleName == "Администратор"
-                ? Visibility.Visible : Visibility.Collapsed;
+            AdminPanel.Visibility = user.RoleName == "Администратор" ? Visibility.Visible : Visibility.Collapsed;
 
             if (canFilter)
             {
-                SupplierBox.ItemsSource = DbHelper.GetSuppliers();
+                List<string> suppliers = new List<string>();
+                suppliers.Add("Все поставщики");
+                suppliers.AddRange(DbHelper.GetNames("supplier"));
+                SupplierBox.ItemsSource = suppliers;
                 SupplierBox.SelectedIndex = 0;
 
-                SortBox.ItemsSource = new[] { "Без сортировки", "Кол-во ↑", "Кол-во ↓" };
+                SortBox.ItemsSource = new string[] {
+                    "Без сортировки", "Кол-во по возрастанию", "Кол-во по убыванию"
+                };
                 SortBox.SelectedIndex = 0;
             }
 
@@ -50,50 +42,31 @@ namespace exam
 
         private void LoadProducts()
         {
-            _allProducts = DbHelper.GetProducts();
+            _all = DbHelper.GetProducts();
             Refresh();
         }
 
         private void Refresh()
         {
-            List<Product> result = new List<Product>();
+            string q = SearchBox.Text == null ? "" : SearchBox.Text.ToLower();
+            string sup = SupplierBox.SelectedItem == null ? "Все поставщики" : SupplierBox.SelectedItem.ToString();
 
-            foreach (Product p in _allProducts)
-            {
-                // Поиск по всем текстовым полям
-                if (!string.IsNullOrWhiteSpace(SearchBox.Text))
-                {
-                    string q = SearchBox.Text.ToLower();
-                    bool match = p.Article.ToLower().Contains(q) ||
-                                 p.Name.ToLower().Contains(q) ||
-                                 p.Description.ToLower().Contains(q) ||
-                                 p.CategoryName.ToLower().Contains(q) ||
-                                 p.SupplierName.ToLower().Contains(q) ||
-                                 p.ManufacturerName.ToLower().Contains(q);
-                    if (!match) continue;
-                }
+            IEnumerable<Product> res = _all
+                .Where(p => q == "" ||
+                            p.Article.ToLower().Contains(q) ||
+                            p.Name.ToLower().Contains(q) ||
+                            (p.Description != null && p.Description.ToLower().Contains(q)) ||
+                            p.CategoryName.ToLower().Contains(q) ||
+                            p.SupplierName.ToLower().Contains(q) ||
+                            p.ManufacturerName.ToLower().Contains(q))
+                .Where(p => sup == "Все поставщики" || p.SupplierName == sup);
 
-                // Фильтр по поставщику
-                string supplier = SupplierBox.SelectedItem != null
-                    ? SupplierBox.SelectedItem.ToString() : "Все поставщики";
-                if (supplier != "Все поставщики" && p.SupplierName != supplier)
-                    continue;
+            if (SortBox.SelectedIndex == 1) res = res.OrderBy(p => p.Stock);
+            else if (SortBox.SelectedIndex == 2) res = res.OrderByDescending(p => p.Stock);
 
-                result.Add(p);
-            }
-
-            // Сортировка по складу
-            string sort = SortBox.SelectedItem != null
-                ? SortBox.SelectedItem.ToString() : "Без сортировки";
-            if (sort == "Кол-во ↑")
-                result = result.OrderBy(p => p.Stock).ToList();
-            else if (sort == "Кол-во ↓")
-                result = result.OrderByDescending(p => p.Stock).ToList();
-
-            ProductsGrid.ItemsSource = result;
+            ProductsGrid.ItemsSource = res.ToList();
         }
 
-        // Подсветка строк
         private void ProductsGrid_LoadingRow(object sender, DataGridRowEventArgs e)
         {
             Product p = e.Row.Item as Product;
@@ -107,22 +80,19 @@ namespace exam
                 e.Row.Background = new SolidColorBrush(Colors.White);
         }
 
-        // Двойной клик — открыть редактирование (только админ)
         private void ProductsGrid_DoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (_user.RoleName != "Администратор") return;
             if (ProductsGrid.SelectedItem == null) return;
 
             Product p = (Product)ProductsGrid.SelectedItem;
-            AddEditProductWindow window = new AddEditProductWindow(p);
-            window.ShowDialog();
+            new AddEditProductWindow(p).ShowDialog();
             LoadProducts();
         }
 
         private void AddButton_Click(object sender, RoutedEventArgs e)
         {
-            AddEditProductWindow window = new AddEditProductWindow(null);
-            window.ShowDialog();
+            new AddEditProductWindow(null).ShowDialog();
             LoadProducts();
         }
 
@@ -130,23 +100,18 @@ namespace exam
         {
             if (ProductsGrid.SelectedItem == null)
             {
-                MessageBox.Show("Выберите товар для удаления.", "Ошибка");
+                MessageBox.Show("Выберите товар.");
                 return;
             }
-
             Product p = (Product)ProductsGrid.SelectedItem;
-
-            if (DbHelper.IsProductInOrder(p.Article))
+            if (DbHelper.IsInOrder(p.Article))
             {
-                MessageBox.Show("Нельзя удалить товар, который есть в заказах.", "Ошибка");
+                MessageBox.Show("Нельзя удалить товар, который есть в заказах.");
                 return;
             }
-
-            MessageBoxResult confirm = MessageBox.Show(
-                "Удалить товар " + p.Name + "?", "Подтверждение",
-                MessageBoxButton.YesNo, MessageBoxImage.Warning);
-
-            if (confirm == MessageBoxResult.Yes)
+            MessageBoxResult res = MessageBox.Show("Удалить " + p.Name + "?", "Подтверждение",
+                MessageBoxButton.YesNo);
+            if (res == MessageBoxResult.Yes)
             {
                 DbHelper.DeleteProduct(p.Article);
                 LoadProducts();
@@ -159,9 +124,14 @@ namespace exam
             this.Close();
         }
 
-        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => Refresh();
-        private void SupplierBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => Refresh();
-        private void SortBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => Refresh();
+        private void Search_Changed(object sender, TextChangedEventArgs e)
+        {
+            Refresh();
+        }
+
+        private void Combo_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            Refresh();
+        }
     }
 }
-

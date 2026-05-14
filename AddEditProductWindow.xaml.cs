@@ -1,37 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using korzunov.models;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
-namespace exam
+namespace korzunov
 {
     public partial class AddEditProductWindow : Window
     {
-        private Product _existing; // null = добавление, не null = редактирование
+        private Product _existing;
 
         public AddEditProductWindow(Product existing)
         {
             InitializeComponent();
             _existing = existing;
 
-            CategoryBox.ItemsSource = DbHelper.GetCategories();
-            ManufacturerBox.ItemsSource = DbHelper.GetManufacturers();
-            SupplierBox.ItemsSource = DbHelper.GetSuppliers()
-                .FindAll(s => s != "Все поставщики");
+            CategoryBox.ItemsSource = DbHelper.GetNames("category");
+            ManufacturerBox.ItemsSource = DbHelper.GetNames("manufacturer");
+            SupplierBox.ItemsSource = DbHelper.GetNames("supplier");
 
             if (existing != null)
             {
-                // Редактирование — заполняем поля
-                Title = "Редактировать товар";
+                Title = "Редактирование товара";
                 ArticleBox.Text = existing.Article;
                 ArticleBox.IsReadOnly = true;
                 NameBox.Text = existing.Name;
@@ -45,10 +32,12 @@ namespace exam
             }
             else
             {
-                Title = "Добавить товар";
+                Title = "Добавление товара";
                 CategoryBox.SelectedIndex = 0;
                 ManufacturerBox.SelectedIndex = 0;
                 SupplierBox.SelectedIndex = 0;
+                DiscountBox.Text = "0";
+                StockBox.Text = "0";
             }
         }
 
@@ -63,29 +52,35 @@ namespace exam
                 return;
             }
 
-            decimal price = 0;
-            decimal.TryParse(PriceBox.Text, out price);
-            if (price < 0)
+            decimal price;
+            if (!decimal.TryParse(PriceBox.Text, out price) || price < 0)
             {
-                ErrorText.Text = "Цена не может быть отрицательной.";
+                ErrorText.Text = "Цена должна быть неотрицательным числом.";
                 return;
             }
 
-            int stock = 0;
-            int.TryParse(StockBox.Text, out stock);
-            if (stock < 0)
+            int stock;
+            if (!int.TryParse(StockBox.Text, out stock) || stock < 0)
             {
-                ErrorText.Text = "Количество не может быть отрицательным.";
+                ErrorText.Text = "Количество должно быть неотрицательным числом.";
                 return;
             }
 
-            int discount = 0;
+            int discount;
             int.TryParse(DiscountBox.Text, out discount);
+
+            if (CategoryBox.SelectedItem == null ||
+                ManufacturerBox.SelectedItem == null ||
+                SupplierBox.SelectedItem == null)
+            {
+                ErrorText.Text = "Выберите категорию, производителя и поставщика.";
+                return;
+            }
 
             Product p = new Product();
             p.Article = ArticleBox.Text.Trim();
             p.Name = NameBox.Text.Trim();
-            p.Description = DescBox.Text.Trim();
+            p.Description = DescBox.Text;
             p.Price = price;
             p.Discount = discount;
             p.Stock = stock;
@@ -93,15 +88,13 @@ namespace exam
             p.ManufacturerName = ManufacturerBox.SelectedItem.ToString();
             p.SupplierName = SupplierBox.SelectedItem.ToString();
 
-            if (_existing == null)
-                DbHelper.AddProduct(p);
-            else
-                DbHelper.UpdateProduct(p);
-
+            DbHelper.SaveProduct(p, _existing == null);
             this.DialogResult = true;
         }
 
-        private void CancelButton_Click(object sender, RoutedEventArgs e) => Close();
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
     }
 }
-

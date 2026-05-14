@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace exam
+namespace korzunov.models
 {
     public class User
     {
@@ -12,4 +6,3 @@ namespace exam
         public string RoleName { get; set; }
     }
 }
-

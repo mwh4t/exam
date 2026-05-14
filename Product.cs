@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace exam
+namespace korzunov.models
 {
     public class Product
     {
@@ -14,11 +8,8 @@ namespace exam
         public decimal Price { get; set; }
         public int Discount { get; set; }
         public int Stock { get; set; }
-        public string Photo { get; set; }
         public string CategoryName { get; set; }
         public string SupplierName { get; set; }
         public string ManufacturerName { get; set; }
-        public string UnitName { get; set; }
     }
 }
-
