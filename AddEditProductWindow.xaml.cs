@@ -77,16 +77,18 @@ namespace korzunov
                 return;
             }
 
-            Product p = new Product();
-            p.Article = ArticleBox.Text.Trim();
-            p.Name = NameBox.Text.Trim();
-            p.Description = DescBox.Text;
-            p.Price = price;
-            p.Discount = discount;
-            p.Stock = stock;
-            p.CategoryName = CategoryBox.SelectedItem.ToString();
-            p.ManufacturerName = ManufacturerBox.SelectedItem.ToString();
-            p.SupplierName = SupplierBox.SelectedItem.ToString();
+            Product p = new Product
+            {
+                Article = ArticleBox.Text.Trim(),
+                Name = NameBox.Text.Trim(),
+                Description = DescBox.Text,
+                Price = price,
+                Discount = discount,
+                Stock = stock,
+                CategoryName = CategoryBox.SelectedItem.ToString(),
+                ManufacturerName = ManufacturerBox.SelectedItem.ToString(),
+                SupplierName = SupplierBox.SelectedItem.ToString()
+            };
 
             DbHelper.SaveProduct(p, _existing == null);
             this.DialogResult = true;

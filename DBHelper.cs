@@ -34,18 +34,31 @@ namespace korzunov
             }
         }
 
-        public static List<Product> GetProducts()
+        public static List<Product> GetProducts(string search, string supplier, int sortMode)
         {
             List<Product> list = new List<Product>();
             using (MySqlConnection conn = new MySqlConnection(_conn))
             {
                 conn.Open();
-                MySqlCommand cmd = new MySqlCommand(
+                string sql =
                     "SELECT p.article, p.name, p.description, p.price, p.discount, p.stock, " +
                     "c.name, s.name, m.name FROM product p " +
                     "JOIN category c ON p.id_category = c.id_category " +
                     "JOIN supplier s ON p.id_supplier = s.id_supplier " +
-                    "JOIN manufacturer m ON p.id_manufacturer = m.id_manufacturer", conn);
+                    "JOIN manufacturer m ON p.id_manufacturer = m.id_manufacturer " +
+                    // поиск по всем полям. Чтобы искать только по наименованию,
+                    // заменить скобку с OR-ами на: "WHERE p.name LIKE @q "
+                    "WHERE (p.article LIKE @q OR p.name LIKE @q OR p.description LIKE @q OR " +
+                    "c.name LIKE @q OR s.name LIKE @q OR m.name LIKE @q) " +
+                    "AND (@sup = 'Все поставщики' OR s.name = @sup)";
+
+                if (sortMode == 1) sql += " ORDER BY p.stock ASC";
+                else if (sortMode == 2) sql += " ORDER BY p.stock DESC";
+
+                MySqlCommand cmd = new MySqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@q", "%" + search + "%");
+                cmd.Parameters.AddWithValue("@sup", supplier);
+
                 MySqlDataReader r = cmd.ExecuteReader();
                 while (r.Read())
                 {
